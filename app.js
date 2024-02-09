@@ -4,6 +4,7 @@ const bodyParser = require("body-parser");
 const postRoute = require("./routes/posts");
 const userRoute = require("./routes/users");
 const imageRoute = require("./routes/images");
+const commentRoute = require("./routes/comments");
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -15,5 +16,6 @@ app.get("/health-check", (req, res) => {
 app.use("/posts", postRoute);
 app.use("/user", userRoute);
 app.use("/images", imageRoute);
+app.use("/comments", commentRoute);
 
 module.exports = app;

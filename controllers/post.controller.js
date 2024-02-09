@@ -85,27 +85,22 @@ async function show(req, res) {
 async function update(req, res) {
   try {
     const { id } = req.params;
-    const { title, content, image_url, category_id } = req.body;
-
-    const updatedPost = {
-      title,
-      content,
-      imageUrl: image_url,
-      categoryId: category_id,
-    };
-
-    const userId = 1;
+    const { title, userId, content, image_url, categoryId } = req.body;
 
     // Validation schema
     const schema = {
       title: { type: "string", optional: false, max: 100 },
       content: { type: "string", optional: false, max: 500 },
       categoryId: { type: "number", optional: false },
+      userId: { type: "number", optional: false },
     };
 
     // Validate request body
     const v = new Validator();
-    const validationResponse = v.validate(updatedPost, schema);
+    const validationResponse = v.validate(
+      { title, userId, content, image_url, categoryId },
+      schema
+    );
 
     if (validationResponse !== true) {
       return res.status(400).json({
@@ -122,6 +117,14 @@ async function update(req, res) {
         message: `Post not found with id ${id}`,
       });
     }
+
+    const updatedPost = {
+      title,
+      content,
+      imageUrl: image_url,
+      categoryId: categoryId,
+      userId: userId,
+    };
 
     // Update post
     await models.Post.update(updatedPost, { where: { id, userId } });
