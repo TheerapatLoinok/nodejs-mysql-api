@@ -41,12 +41,19 @@ async function save(req, res) {
       });
     }
 
+    const category = await models.Category.findByPk(category_id);
+    if (category === null) {
+      return res.status(404).json({
+        message: "Category Not Found",
+      });
+    }
+
     // Create post
     const post = {
       title,
       content,
       imageUrl: image_url,
-      categoryId: category_id,
+      categoryId: category.id,
       userId: 1,
     };
     const result = await models.Post.create(post);
