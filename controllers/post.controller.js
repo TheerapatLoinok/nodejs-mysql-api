@@ -3,62 +3,74 @@ const models = require("../models");
 
 async function index(req, res) {
   try {
-    const result = await models.Post.findAll();
-    if (result) {
+    const posts = await models.Post.findAll();
+    if (posts.length > 0) {
       res.status(200).json({
-        data: result,
+        data: posts,
       });
     } else {
       res.status(404).json({
-        message: "Post Not Found",
+        message: "No posts found",
       });
     }
   } catch (error) {
+    console.error("Error retrieving posts:", error);
     res.status(500).json({ message: "Internal Server Error" });
   }
 }
 async function save(req, res) {
   try {
-    const post = {
-      title: req.body.title,
-      content: req.body.content,
-      imageUrl: req.body.image_url,
-      categoryId: req.body.category_id,
-      userId: 1,
-    };
+    const { title, content, image_url, category_id } = req.body;
 
+    // Validate incoming data
     const schema = {
-      title: { type: "string", optional: false, max: "100" },
-      content: { type: "string", optional: false, max: "500" },
-      categoryId: { type: "number", optional: false, max: "500" },
+      title: { type: "string", optional: false, max: 100 },
+      content: { type: "string", optional: false, max: 500 },
+      category_id: { type: "number", optional: false },
     };
-
     const v = new Validator();
-    const validationResponse = v.validate(post, schema);
+    const validationResponse = v.validate(
+      { title, content, category_id },
+      schema
+    );
 
     if (validationResponse !== true) {
-      res.status(400).json({
+      return res.status(400).json({
         message: "Bad request",
         error: validationResponse,
       });
-    } else {
-      const result = await models.Post.create(post);
-      res.status(201).json({
-        message: "Created Successfully",
-        data: result,
-      });
     }
+
+    // Create post
+    const post = {
+      title,
+      content,
+      imageUrl: image_url,
+      categoryId: category_id,
+      userId: 1,
+    };
+    const result = await models.Post.create(post);
+
+    // Return response
+    res.status(201).json({
+      message: "Created Successfully",
+      data: result,
+    });
   } catch (error) {
+    console.error("Error saving post:", error);
     res.status(500).json({ message: "Internal Server Error" });
   }
 }
 async function show(req, res) {
   try {
-    const id = req.params.id;
-    const result = await models.Post.findByPk(id);
-    if (result) {
+    // Using destructuring to directly get id from req.params
+    const { id } = req.params;
+    const post = await models.Post.findByPk(id);
+
+    // Use optional chaining operator to simplify null check
+    if (post?.dataValues) {
       res.status(200).json({
-        data: result,
+        data: post,
       });
     } else {
       res.status(404).json({
@@ -66,6 +78,7 @@ async function show(req, res) {
       });
     }
   } catch (error) {
+    console.error("Error fetching post:", error);
     res.status(500).json({ message: "Internal Server Error" });
   }
 }
@@ -83,12 +96,14 @@ async function update(req, res) {
 
     const userId = 1;
 
+    // Validation schema
     const schema = {
       title: { type: "string", optional: false, max: 100 },
       content: { type: "string", optional: false, max: 500 },
-      categoryId: { type: "number", optional: false, max: 500 },
+      categoryId: { type: "number", optional: false },
     };
 
+    // Validate request body
     const v = new Validator();
     const validationResponse = v.validate(updatedPost, schema);
 
@@ -99,20 +114,23 @@ async function update(req, res) {
       });
     }
 
+    // Check if post exists
     const post = await models.Post.findByPk(id);
 
     if (!post) {
       return res.status(404).json({
-        message: `Not Found Post`,
+        message: `Post not found with id ${id}`,
       });
     }
 
+    // Update post
     await models.Post.update(updatedPost, { where: { id, userId } });
 
     res.status(200).json({
-      message: "Updated post",
+      message: "Post updated successfully",
     });
   } catch (error) {
+    console.error("Error updating post:", error);
     res.status(500).json({ message: "Internal Server Error" });
   }
 }
@@ -120,21 +138,21 @@ async function destroy(req, res) {
   try {
     const { id } = req.params;
     const userId = 1;
-
+    // Check if post exists
     const post = await models.Post.findByPk(id);
-
     if (!post) {
       return res.status(404).json({
-        message: "Not Found Post",
+        message: `Post not found with id ${id}`,
       });
     }
-
+    // Delete post
     await models.Post.destroy({ where: { id, userId } });
     res.status(200).json({
       message: "Post was successfully destroyed",
       postId: id,
     });
   } catch (error) {
+    console.error("Error destroying post:", error);
     res.status(500).json({ message: "Internal Server Error" });
   }
 }
