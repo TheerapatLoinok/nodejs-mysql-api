@@ -54,7 +54,7 @@ async function save(req, res) {
       content,
       imageUrl: image_url,
       categoryId: category.id,
-      userId: 1,
+      userId: req.userData.userId,
     };
     const result = await models.Post.create(post);
 
