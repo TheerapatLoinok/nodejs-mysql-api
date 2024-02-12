@@ -99,7 +99,6 @@ async function update(req, res) {
       title: { type: "string", optional: false, max: 100 },
       content: { type: "string", optional: false, max: 500 },
       categoryId: { type: "number", optional: false },
-      userId: { type: "number", optional: false },
     };
 
     // Validate request body
@@ -117,7 +116,9 @@ async function update(req, res) {
     }
 
     // Check if post exists
-    const post = await models.Post.findByPk(id);
+    const post = await models.Post.findOne({
+      where: { id: id, userId: req.userData.userId },
+    });
 
     if (!post) {
       return res.status(404).json({
@@ -130,11 +131,13 @@ async function update(req, res) {
       content,
       imageUrl: image_url,
       categoryId: categoryId,
-      userId: userId,
+      userId: req.userData.userId,
     };
 
     // Update post
-    await models.Post.update(updatedPost, { where: { id, userId } });
+    await models.Post.update(updatedPost, {
+      where: { id: id, userId: req.userData.userId },
+    });
 
     res.status(200).json({
       message: "Post updated successfully",
@@ -147,16 +150,19 @@ async function update(req, res) {
 async function destroy(req, res) {
   try {
     const { id } = req.params;
-    const userId = 1;
     // Check if post exists
-    const post = await models.Post.findByPk(id);
+    const post = await models.Post.findOne({
+      where: { id: id, userId: req.userData.userId },
+    });
     if (!post) {
       return res.status(404).json({
         message: `Post not found with id ${id}`,
       });
     }
     // Delete post
-    await models.Post.destroy({ where: { id, userId } });
+    await models.Post.destroy({
+      where: { id: id, userId: req.userData.userId },
+    });
     res.status(200).json({
       message: "Post was successfully destroyed",
       postId: id,

@@ -20,16 +20,15 @@ const index = async (req, res) => {
 };
 const save = async (req, res) => {
   try {
-    const { content, postId, userId } = req.body;
+    const { content, postId } = req.body;
 
     // Validate incoming data
     const schema = {
       content: { type: "string", optional: false, max: 100 },
       postId: { type: "number", optional: false },
-      userId: { type: "number", optional: false },
     };
     const v = new Validator();
-    const validationResponse = v.validate({ content, postId, userId }, schema);
+    const validationResponse = v.validate({ content, postId }, schema);
 
     if (validationResponse !== true) {
       return res.status(400).json({
@@ -47,7 +46,7 @@ const save = async (req, res) => {
 
     const comment = {
       content: content,
-      userId: userId,
+      userId: req.userData.userId,
       postId: postId,
     };
 
@@ -87,15 +86,14 @@ const show = async (req, res) => {
 const update = async (req, res) => {
   try {
     const { id } = req.params;
-    const { content, userId, postId } = req.body;
+    const { content, postId } = req.body;
 
     const schema = {
       content: { type: "string", optional: false, max: 100 },
-      userId: { type: "number", optional: false },
       postId: { type: "number", optional: false },
     };
     const v = new Validator();
-    const validationResponse = v.validate({ content, postId, userId }, schema);
+    const validationResponse = v.validate({ content, postId }, schema);
 
     if (validationResponse !== true) {
       return res.status(400).json({
@@ -105,7 +103,7 @@ const update = async (req, res) => {
     }
 
     const comment = await models.Comment.findOne({
-      where: { id: id, postId: postId, userId: userId },
+      where: { id: id, postId: postId, userId: req.userData.userId },
     });
     if (!comment) {
       return res.status(404).json({
@@ -119,7 +117,7 @@ const update = async (req, res) => {
 
     // Update comment
     await models.Comment.update(updatedComment, {
-      where: { id: id, userId: userId },
+      where: { id: id, postId: postId, userId: req.userData.userId },
     });
 
     res.status(200).json({
